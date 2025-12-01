@@ -89,25 +89,18 @@ jobs:
           retention-days: 7
 
       # -------------------
-      # ✅ AUTOMATIC GITHUB RELEASE (fixed)
+      # ✅ AUTOMATIC GITHUB RELEASE WITH ASSETS
       # -------------------
       - name: Set release tag
         id: vars
         run: |
           echo "RELEASE_TAG=model-$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
 
-      - name: Create GitHub Release
-        id: create_release
+      - name: Create GitHub Release with assets
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ env.RELEASE_TAG }}
           name: "Bitcoin Model Release"
           allowUpdates: true
           token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload Release Assets
-        uses: alexellis/upload-assets@0.3.0
-        with:
-          asset_paths: "models/saved_models/*.pkl,models/saved_models/*.json"
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          tag: ${{ env.RELEASE_TAG }}
+          assets: "models/saved_models/*.pkl,models/saved_models/*.json"

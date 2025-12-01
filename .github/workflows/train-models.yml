@@ -1,12 +1,9 @@
 name: Train Models and Update Data
 
 on:
-  # Run daily at 2 AM UTC
   schedule:
     - cron: '0 2 * * *'
-  # Allow manual triggering
   workflow_dispatch:
-  # Run on push to main branch (optional)
   push:
     branches:
       - main
@@ -92,13 +89,18 @@ jobs:
           retention-days: 7
 
       # -------------------
-      # ✅ AUTOMATIC GITHUB RELEASE
+      # ✅ AUTOMATIC GITHUB RELEASE (fixed)
       # -------------------
+      - name: Set release tag
+        id: vars
+        run: |
+          echo "RELEASE_TAG=model-$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
+
       - name: Create GitHub Release
         id: create_release
         uses: ncipollo/release-action@v1
         with:
-          tag: "model-$(date +'%Y%m%d%H%M%S')"
+          tag: ${{ env.RELEASE_TAG }}
           name: "Bitcoin Model Release"
           allowUpdates: true
           token: ${{ secrets.GITHUB_TOKEN }}

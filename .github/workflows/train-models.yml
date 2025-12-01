@@ -1,12 +1,12 @@
 name: Train Models and Update Data
 
 on:
-  # Run daily at 2 AM UTC (adjust timezone as needed)
+  # Run daily at 2 AM UTC
   schedule:
     - cron: '0 2 * * *'
-  # Allow manual triggering from GitHub Actions UI
+  # Allow manual triggering
   workflow_dispatch:
-  # Also run on push to main branch (optional - remove if you don't want this)
+  # Run on push to main branch (optional)
   push:
     branches:
       - main
@@ -19,7 +19,7 @@ on:
 jobs:
   train-models:
     runs-on: ubuntu-latest
-    timeout-minutes: 60  # Training can take a while
+    timeout-minutes: 60
     
     steps:
       - name: Checkout repository
@@ -45,14 +45,11 @@ jobs:
           pip install -r requirements.txt
 
       - name: Create models directory
-        run: |
-          mkdir -p models/saved_models
+        run: mkdir -p models/saved_models
 
       - name: Train models and update data
-        run: |
-          python update_date.py
+        run: python update_date.py
         env:
-          # Add any environment variables needed for training
           PYTHONUNBUFFERED: 1
 
       - name: Check if models were created
@@ -73,7 +70,6 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           
-          # Check if there are changes to commit
           if git diff --quiet && git diff --staged --quiet; then
             echo "No changes to commit"
           else
@@ -95,3 +91,21 @@ jobs:
             wikipedia_edits.csv
           retention-days: 7
 
+      # -------------------
+      # ✅ AUTOMATIC GITHUB RELEASE
+      # -------------------
+      - name: Create GitHub Release
+        id: create_release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: "model-$(date +'%Y%m%d%H%M%S')"
+          name: "Bitcoin Model Release"
+          allowUpdates: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Release Assets
+        uses: alexellis/upload-assets@0.3.0
+        with:
+          asset_paths: "models/saved_models/*.pkl,models/saved_models/*.json"
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          release_url: ${{ steps.create_release.outputs.upload_url }}
